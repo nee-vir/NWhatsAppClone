@@ -12,17 +12,23 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
+import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
 import com.shashank.sony.fancytoastlib.FancyToast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ChatActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private EditText writeMessage;
     private Button sendButton;
-    RecyclerViewAdapterM recyclerViewAdapterM;
+    private ArrayList<ParseObject> parseObjectsList;
+    RecyclerViewAdapterM adapterM;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -33,10 +39,44 @@ public class ChatActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.messages_recycler_view);
         writeMessage=findViewById(R.id.w_message);
         sendButton=findViewById(R.id.send_button);
-        recyclerViewAdapterM=new RecyclerViewAdapterM();
+        parseObjectsList=new ArrayList<>();
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(recyclerViewAdapterM);
+        adapterM=new RecyclerViewAdapterM(parseObjectsList);
+        recyclerView.setAdapter(adapterM);
+        try {
+            ParseQuery<ParseObject> parseQuery = new ParseQuery("Chat");
+            parseQuery.whereEqualTo("mSender", ParseUser.getCurrentUser().getUsername()+"");
+            parseQuery.whereEqualTo("mReceiver", clickedUsername+"" );
+            ParseQuery<ParseObject> parseQueryS = new ParseQuery<ParseObject>("Chat");
+            parseQueryS.whereEqualTo("mSender", clickedUsername+"");
+            parseQueryS.whereEqualTo("mReceiver", ParseUser.getCurrentUser().getUsername()+"");
+            ArrayList<ParseQuery<ParseObject>> Queries = new ArrayList<>();
+            Queries.add(parseQuery);
+            Queries.add(parseQueryS);
+            ParseQuery<ParseObject> allQueries = ParseQuery.or(Queries);
+            allQueries.orderByAscending("createdAt");
+            allQueries.findInBackground(new FindCallback<ParseObject>() {
+                @Override
+                public void done(List<ParseObject> objects, ParseException e) {
+                    if (e == null) {
+                        if (objects.size() > 0) {
+                            for (ParseObject parseObject : objects) {
+                                parseObjectsList.add(parseObject);
+
+                            }
+                            parseObjectsList.notifyAll();
+                            adapterM.notifyDataSetChanged();
+
+
+                        }
+                    }
+                }
+            });
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+//        recyclerView.setAdapter(recyclerViewAdapterM);
 
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -60,7 +100,9 @@ public class ChatActivity extends AppCompatActivity {
                 } catch (Exception e){
                     e.printStackTrace();
                 }
+
             }
         });
+
     }
 }

@@ -9,8 +9,19 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.parse.Parse;
+import com.parse.ParseObject;
+import com.parse.ParseUser;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class RecyclerViewAdapterM extends RecyclerView.Adapter<RecyclerViewAdapterM.MyViewHolder> {
-    public RecyclerViewAdapterM() {
+
+    private ArrayList<ParseObject> receivedParseObjects;
+
+    public RecyclerViewAdapterM(ArrayList receivedParseObjects) {
+        this.receivedParseObjects = receivedParseObjects;
     }
 
     @NonNull
@@ -23,15 +34,32 @@ public class RecyclerViewAdapterM extends RecyclerView.Adapter<RecyclerViewAdapt
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
+        try{
+            if(receivedParseObjects.get(position).get("mSender")== ParseUser.getCurrentUser().getUsername()){
+                /*holder.messageSender.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_START);
+                holder.theMessage.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_START);
+                holder.theMessage.setBackgroundResource(R.drawable.message_bg);*/
+                holder.messageSender.setText(ParseUser.getCurrentUser().getUsername());
+                holder.theMessage.setText(receivedParseObjects.get(position).get("theMessage")+"");
+            } else{
+                /*holder.messageSender.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
+                holder.theMessage.setBackgroundResource(R.drawable.message_bg2);
+                holder.theMessage.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);*/
+                holder.messageSender.setText(receivedParseObjects.get(position).get("mSender")+"");
+                holder.theMessage.setText(receivedParseObjects.get(position).get("theMessage")+"");
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
 
-        holder.messageSender.setText("Neevir");
-        holder.theMessage.setText("Hi, How are you?");
+
+
 
     }
 
     @Override
     public int getItemCount() {
-        return 5;
+        return receivedParseObjects.size();
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder{
