@@ -35,6 +35,7 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
         if(ParseUser.getCurrentUser()!=null){
             Intent intent=new Intent(LogInActivity.this,MainActivity.class);
             startActivity(intent);
+            finish();
         }
     }
 

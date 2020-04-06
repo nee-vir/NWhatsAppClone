@@ -2,6 +2,7 @@ package com.example.nwhatsappclone;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Adapter;
 import android.widget.Button;
@@ -22,6 +23,10 @@ import com.shashank.sony.fancytoastlib.FancyToast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class ChatActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
@@ -44,6 +49,47 @@ public class ChatActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapterM=new RecyclerViewAdapterM(parseObjectsList);
         recyclerView.setAdapter(adapterM);
+        Runnable helloRunnable = new Runnable() {
+            public void run() {
+                queryAndFetch(clickedUsername);
+            }
+        };
+
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+        executor.scheduleAtFixedRate(helloRunnable, 0, 500, TimeUnit.MILLISECONDS);
+        //queryAndFetch(clickedUsername);
+//        recyclerView.setAdapter(recyclerViewAdapterM);
+
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    ParseObject parseObject = ParseObject.create("Chat");
+                    parseObject.put("mSender", ParseUser.getCurrentUser().getUsername()+"");
+                    parseObject.put("mReceiver", clickedUsername+"");
+                    parseObject.put("theMessage", writeMessage.getText()+"");
+                    parseObject.saveInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if (e == null) {
+                                FancyToast.makeText(ChatActivity.this, "Message Sent", FancyToast.LENGTH_SHORT, FancyToast.SUCCESS, false).show();
+                                writeMessage.setText("");
+                                recyclerView.smoothScrollToPosition(adapterM.getItemCount());
+                            } else {
+                                FancyToast.makeText(ChatActivity.this, "Failed to send message!", FancyToast.LENGTH_SHORT, FancyToast.ERROR, false).show();
+                            }
+                        }
+                    });
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
+    }
+
+    private void queryAndFetch(String clickedUsername) {
         try {
             ParseQuery<ParseObject> parseQuery = new ParseQuery("Chat");
             parseQuery.whereEqualTo("mSender", ParseUser.getCurrentUser().getUsername()+"");
@@ -61,11 +107,11 @@ public class ChatActivity extends AppCompatActivity {
                 public void done(List<ParseObject> objects, ParseException e) {
                     if (e == null) {
                         if (objects.size() > 0) {
+                            parseObjectsList.clear();
                             for (ParseObject parseObject : objects) {
                                 parseObjectsList.add(parseObject);
 
                             }
-                            parseObjectsList.notifyAll();
                             adapterM.notifyDataSetChanged();
 
 
@@ -76,33 +122,5 @@ public class ChatActivity extends AppCompatActivity {
         } catch (Exception e){
             e.printStackTrace();
         }
-//        recyclerView.setAdapter(recyclerViewAdapterM);
-
-        sendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    ParseObject parseObject = ParseObject.create("Chat");
-                    parseObject.put("mSender", ParseUser.getCurrentUser().getUsername()+"");
-                    parseObject.put("mReceiver", clickedUsername+"");
-                    parseObject.put("theMessage", writeMessage.getText()+"");
-                    parseObject.saveInBackground(new SaveCallback() {
-                        @Override
-                        public void done(ParseException e) {
-                            if (e == null) {
-                                FancyToast.makeText(ChatActivity.this, "Message Sent", FancyToast.LENGTH_SHORT, FancyToast.SUCCESS, false).show();
-                                writeMessage.setText("");
-                            } else {
-                                FancyToast.makeText(ChatActivity.this, "Failed to send message!", FancyToast.LENGTH_SHORT, FancyToast.ERROR, false).show();
-                            }
-                        }
-                    });
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
-
-            }
-        });
-
     }
 }

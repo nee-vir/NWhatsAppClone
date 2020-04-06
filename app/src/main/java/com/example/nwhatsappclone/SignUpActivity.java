@@ -77,6 +77,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
             case R.id.toLoginActivity:
                 Intent intent=new Intent(this,LogInActivity.class);
                 startActivity(intent);
+                finishAffinity();
                 finish();
                 break;
         }
